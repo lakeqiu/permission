@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="locations">
+            <list>
+                <value>classpath:settings.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${db.driverClassName}" />
+        <property name="url" value="${db.url}" />
+        <property name="username" value="${db.username}" />
+        <property name="password" value="${db.password}" />
+        <!-- 连接池初始连接数量、最小活跃数量、最大活跃数量、最长等待时间 -->
+        <!-- 这些配置最好都是根据项目情况而定 -->
+        <property name="initialSize" value="3" />
+        <property name="minIdle" value="3" />
+        <property name="maxActive" value="20" />
+        <property name="maxWait" value="6000" />
+        <!-- druid特有的 -->
+        <property name="filters" value="sta,wall" />
+    </bean>
+
+    <!-- mybatis相关，sqlSessionFactory是会话，可以看出mybatis与spring整合使用spring中提供的FactoryBean -->
+    <!-- ref是引用，引用这个文件写的 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis-config.xml" />
+        <property name="dataSource" ref="dataSource" />
+        <property name="mapperLocations" value="classpath:mapper/*.xml" />
+    </bean>
+    <!-- 扫描mapper目录 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.lakeqiu.mapper" />
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+    </bean>
+
+    <!-- 在这里，我们首先定义了dataSource，通过这个，我们可以知道是如何连接数据库的。接下来我们定义sqlSessionFactory，
+         这里面通过mapperLocations指定的sql是放在哪里的，以及引用了dataSource也知道是如何连接数据库。最后，我们定义了
+         MapperScannerConfigurer这个类，这个类是spring启动时首先加载的类，这个类注入了sqlSessionFactory,这样一来，在
+         spring加载到MapperScannerConfigurer这个类的时候就会知道如何读取连接数据库的类，以及这些类对应的sql文件在哪里，
+         也知道数据库如何连接；这样一来，就可以使用com.lakeqiu.mapper下面的类去连接数据库以及对应的xml文件进行处理。这样
+         一来，我们的spring就可以操作数据库了 -->
+
+    <!-- 配置事务管理器 -->
+    <bean id="transactionMapper" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <!-- 开启事务 -->
+    <tx:annotation-driven transaction-manager="transactionMapper" />
+
+    <!-- druid -->
+    <bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <!-- slowSqlMillis: 如果一个sql操作时间超过3秒，其就会被标为慢sql
+             logSlowSql: 是否要将慢sql记录下来
+             mergeSql: 是否将慢sql记录在一起，这样更容易看 -->
+        <property name="slowSqlMillis" value="3000" />
+        <property name="logSlowSql" value="true" />
+        <property name="mergeSql" value="true" />
+    </bean>
+    <bean id="wall-filter" class="com.alibaba.druid.wall.WallFilter">
+        <!-- 告诉其，我们使用的db是mysql -->
+        <property name="dbType" value="mysql" />
+    </bean>
+</beans>

@@ -1,0 +1,94 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+  <display-name>Archetype Created Web Application</display-name>
+  
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!-- spring beans 配置文件所在目录 -->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <!-- 不加classpath的话默认在WEB-INF下 -->
+    <param-value>classpath:applicationContext.xml</param-value>
+  </context-param>
+  <context-param>
+    <param-name/>
+    <param-value/>
+  </context-param>
+
+  <!-- spring mvc 配置 -->
+  <!-- 配置spring mvc默认转发器，让其拦截所有请求 -->
+  <servlet>
+    <servlet-name>spring</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <!-- 使用‘/’匹配不到index.jsp这种，这样性能好一点，为什么呢？ -->
+    <!-- 这就是tomcat的知识了，tomcat有两个servlet：DefaultServlet、JSPServlet -->
+    <!-- 而jsp是有jspServlet处理的，而spring转发器处理的是DefaultServlet，故匹配不到 -->
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <!-- 指定编码过滤器 -->
+  <filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    <!-- 强制使用上面的编码 -->
+    <init-param>
+      <param-name>forceEncoding</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <!-- 会匹配到所有的url -->
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- druid -->
+  <servlet>
+    <servlet-name>DruidStatServlet</servlet-name>
+    <servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+    <!-- 这个设置后，druid就需要进行登录，且登录名、密码均为druid -->
+    <init-param>
+      <param-name>loginUsername</param-name>
+      <param-value>druid</param-value>
+    </init-param>
+    <init-param>
+      <param-name>loginPassword</param-name>
+      <param-value>druid</param-value>
+    </init-param>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DruidStatServlet</servlet-name>
+    <!-- 加sys的话，如果想对druid也进行权限拦截的话比较方便 -->
+    <url-pattern>/sys/druid/*</url-pattern>
+  </servlet-mapping>
+  <filter>
+    <filter-name>DruidWebStatFilter</filter-name>
+    <filter-class>com.alibaba.druid.support.http.WebStatFilter</filter-class>
+    <init-param>
+      <!-- 不拦截 -->
+       <param-name>exclusions</param-name>
+      <param-value>*.js,*.css,*.jpg,*.png,*.ico,*.gif,/sys/druid/*</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>DruidWebStatFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- 默认访问页面 -->
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>
