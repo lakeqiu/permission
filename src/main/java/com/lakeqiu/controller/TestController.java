@@ -22,9 +22,9 @@ public class TestController {
     @RequestMapping("hello.json")
     @ResponseBody
     public JsonData test(){
-        SysAcl bean = ApplicationContextHelper.getBean(SysAcl.class);
+        /*SysAcl bean = ApplicationContextHelper.getBean(SysAcl.class);
         bean.setAclModuleId(1);
-        log.info(JsonMapper.objToJson(bean));
+        log.info(JsonMapper.objToJson(bean));*/
         // throw new PermissionException("权限不足");
         return JsonData.success("hello");
     }

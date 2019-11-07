@@ -1,5 +1,7 @@
 package com.lakeqiu.exception;
 
+import java.util.function.Supplier;
+
 /**
  * @author lakeqiu
  */

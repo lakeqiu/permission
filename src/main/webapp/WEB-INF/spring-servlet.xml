@@ -11,10 +11,19 @@
     <!-- 启动注解驱动的spring mvc 功能 -->
     <mvc:annotation-driven />
 
+    <!-- http请求监听工具 -->
+    <mvc:interceptors>
+        <bean class="com.lakeqiu.common.HttpInterceptor" />
+    </mvc:interceptors>
+
     <!-- 启动包扫描功能 -->
     <context:component-scan base-package="com.lakeqiu.controller" />
     <context:component-scan base-package="com.lakeqiu.service" />
 
+    <!--
+        1、对出现异常处理的类
+        2、获取spring上下文工具
+     -->
     <bean class="com.lakeqiu.common.SpringExceptionResolver" />
     <bean class="com.lakeqiu.common.ApplicationContextHelper" lazy-init="false" />
 
@@ -25,7 +34,7 @@
     <!-- 以json返回由这个类处理 -->
     <bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <property name="prefix" value="/views/" />
+        <property name="prefix" value="/WEB-INF/views/" />
         <property name="suffix" value=".jsp" />
     </bean>
 </beans>
