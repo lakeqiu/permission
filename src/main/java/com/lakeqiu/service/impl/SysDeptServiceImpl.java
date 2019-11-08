@@ -1,11 +1,13 @@
 package com.lakeqiu.service.impl;
 
 import com.google.common.base.Preconditions;
+import com.lakeqiu.common.RequestHolder;
 import com.lakeqiu.exception.ParamException;
 import com.lakeqiu.mapper.SysDeptMapper;
 import com.lakeqiu.model.SysDept;
 import com.lakeqiu.service.SysDeptService;
 import com.lakeqiu.utils.BeanValidator;
+import com.lakeqiu.utils.IpUtil;
 import com.lakeqiu.utils.LevelUtil;
 import com.lakeqiu.vo.DeptParam;
 import org.apache.commons.collections.CollectionUtils;
@@ -62,14 +64,13 @@ public class SysDeptServiceImpl implements SysDeptService {
         }
         // 创建部门信息类
         SysDept dept = SysDept.builder().name(deptParam.getName()).parentId(deptParam.getParentId())
-                .seq(deptParam.getSeq()).remark(deptParam.getRemark()).build();
+                .seq(deptParam.getSeq()).remark(deptParam.getRemark())
+                .operator(RequestHolder.getCurrentUser().getUsername())
+                .operateIp(IpUtil.getRemoteIp(RequestHolder.getCurrentRequest()))
+                .operateTime(new Date()).build();
         // 获取计算出来的当前部门层级关系
         dept.setLevel(LevelUtil.calculateLevel(getLevel(deptParam.getParentId()), deptParam.getParentId()));
-        // TODO
-        dept.setOperator("System");
-        // TODO
-        dept.setOperateIp("127.0.0.1");
-        dept.setOperateTime(new Date());
+
         updateWithChild(before, dept);
     }
 
@@ -112,13 +113,13 @@ public class SysDeptServiceImpl implements SysDeptService {
     }
 
     /**
-     * 获取当前部门层级
-     * @param deptId 当前部门id
-     * @return 当前部门层级
+     * 获取传入部门层级
+     * @param deptId 部门id
+     * @return 部门层级
      */
     private String getLevel(Integer deptId){
         SysDept sysDept = sysDeptMapper.selectByPrimaryKey(deptId);
-        // 如果当前部门为空，说明其的层级应该是第一级，故返回null
+        // 如果部门为空，说明其的层级应该是第一级，故返回null
         return null == sysDept ? null : sysDept.getLevel();
     }
 }

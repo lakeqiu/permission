@@ -47,12 +47,7 @@ public class HttpInterceptor extends HandlerInterceptorAdapter {
      */
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        String url = request.getRequestURL().toString();
-        Map map = request.getParameterMap();
-        log.info("postHandler -> url:{}, params:{}", url, JsonMapper.objToJson(map));
-        Long startTime = (Long) request.getAttribute(START_TIME);
-        long endTime = System.currentTimeMillis();
-        log.info("{} -> {}ms", url, endTime - startTime);
+        removeThreadLocalInfo();
     }
 
     /**
@@ -71,5 +66,11 @@ public class HttpInterceptor extends HandlerInterceptorAdapter {
         Long startTime = (Long) request.getAttribute(START_TIME);
         long endTime = System.currentTimeMillis();
         log.info("{} -> {}", url, endTime - startTime);
+        // 请求结束，移除线程容器中存的变量
+        removeThreadLocalInfo();
+    }
+
+    private void removeThreadLocalInfo(){
+        RequestHolder.remove();
     }
 }

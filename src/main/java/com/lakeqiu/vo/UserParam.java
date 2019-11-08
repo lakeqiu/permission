@@ -37,7 +37,7 @@ public class UserParam {
 
     @NotNull(message = "必须指定用户的状态")
     @Min(value = 0, message = "用户状态不合法")
-    @Max(value = 0, message = "用户状态不和法")
+    @Max(value = 2, message = "用户状态不合法")
     private Integer status;
 
     @Length(max = 200, min = 0, message = "备注长度要在200字以内")

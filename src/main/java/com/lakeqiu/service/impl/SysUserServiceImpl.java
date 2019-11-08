@@ -1,10 +1,14 @@
 package com.lakeqiu.service.impl;
 
+import com.lakeqiu.beans.PageQuery;
+import com.lakeqiu.beans.PageResult;
+import com.lakeqiu.common.RequestHolder;
 import com.lakeqiu.exception.ParamException;
 import com.lakeqiu.mapper.SysUserMapper;
 import com.lakeqiu.model.SysUser;
 import com.lakeqiu.service.SysUserService;
 import com.lakeqiu.utils.BeanValidator;
+import com.lakeqiu.utils.IpUtil;
 import com.lakeqiu.utils.MD5Util;
 import com.lakeqiu.utils.PasswordUtil;
 import com.lakeqiu.vo.UserParam;
@@ -12,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author lakeqiu
@@ -40,11 +45,10 @@ public class SysUserServiceImpl implements SysUserService {
         SysUser sysUser = SysUser.builder().username(userParam.getUsername()).telephone(userParam.getTelephone())
                 .mail(userParam.getMail()).deptId(userParam.getDeptId())
                 .status(userParam.getStatus()).remark(userParam.getRemark())
-                .password("123456").build();
-
-        sysUser.setOperator("System");
-        sysUser.setOperateIp("127.0.0.1");
-        sysUser.setOperateTime(new Date());
+                .password(password).operator(RequestHolder.getCurrentUser().getUsername())
+                .operateTime(new Date())
+                .operateIp(IpUtil.getRemoteIp(RequestHolder.getCurrentRequest()))
+                .build();
 
         // TODO 发送密码到邮箱
 
@@ -72,7 +76,11 @@ public class SysUserServiceImpl implements SysUserService {
                 .telephone(userParam.getTelephone())
                 .mail(userParam.getMail()).deptId(userParam.getDeptId())
                 .status(userParam.getStatus()).remark(userParam.getRemark())
-                .password(before.getPassword()).build();
+                .password(before.getPassword())
+                .operator(RequestHolder.getCurrentUser().getUsername())
+                .operateTime(new Date())
+                .operateIp(IpUtil.getRemoteIp(RequestHolder.getCurrentRequest()))
+                .build();
 
         sysUserMapper.updateByPrimaryKeySelective(sysUser);
     }
@@ -82,6 +90,19 @@ public class SysUserServiceImpl implements SysUserService {
         return sysUserMapper.findByKeyword(username);
     }
 
+    @Override
+    public PageResult<SysUser> getPageByDeptId(Integer deptId, PageQuery pageQuery) {
+        BeanValidator.check(pageQuery);
+        // 查询这个部门用户总数
+        int count = sysUserMapper.countByDeptId(deptId);
+        // 该部门有用户
+        if (count != 0){
+            List<SysUser> userList = sysUserMapper.getPageByDeptId(deptId, pageQuery);
+            return PageResult.<SysUser>builder().total(count).data(userList).build();
+        }
+        // 该部门没有用户
+        return PageResult.<SysUser>builder().build();
+    }
 
     private boolean checkEmailExist(String mail, Integer userId) {
         return sysUserMapper.countByMail(mail, userId) > 0;

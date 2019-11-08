@@ -3,6 +3,7 @@ package com.lakeqiu.service.impl;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.lakeqiu.dto.AclModuleLevelDto;
 import com.lakeqiu.dto.DeptLevelDto;
 import com.lakeqiu.mapper.SysDeptMapper;
 import com.lakeqiu.model.SysDept;
@@ -72,5 +73,10 @@ public class SysTreeServiceImpl implements SysTreeService {
             deptLevelDto.setDtoList(nextDtoList);
             transformDeptTree(nextDtoList, nextLevel, levelDeptMap);
         });
+    }
+
+    @Override
+    public List<AclModuleLevelDto> aclModuleTree() {
+        return null;
     }
 }

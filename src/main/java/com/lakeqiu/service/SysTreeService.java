@@ -1,5 +1,6 @@
 package com.lakeqiu.service;
 
+import com.lakeqiu.dto.AclModuleLevelDto;
 import com.lakeqiu.dto.DeptLevelDto;
 
 import java.util.List;
@@ -13,4 +14,10 @@ public interface SysTreeService {
      * @return
      */
     List<DeptLevelDto> deptTree();
+
+    /**
+     * 将所有权限模块转化为树形结构
+     * @return
+     */
+    List<AclModuleLevelDto> aclModuleTree();
 }
