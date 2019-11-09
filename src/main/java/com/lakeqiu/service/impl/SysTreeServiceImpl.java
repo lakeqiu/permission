@@ -3,12 +3,16 @@ package com.lakeqiu.service.impl;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.lakeqiu.dto.AclDto;
 import com.lakeqiu.dto.AclModuleLevelDto;
 import com.lakeqiu.dto.DeptLevelDto;
+import com.lakeqiu.mapper.SysAclMapper;
 import com.lakeqiu.mapper.SysAclModuleMapper;
 import com.lakeqiu.mapper.SysDeptMapper;
+import com.lakeqiu.model.SysAcl;
 import com.lakeqiu.model.SysAclModule;
 import com.lakeqiu.model.SysDept;
+import com.lakeqiu.service.SysCoreService;
 import com.lakeqiu.service.SysTreeService;
 import com.lakeqiu.utils.LevelUtil;
 import org.apache.commons.collections.CollectionUtils;
@@ -16,7 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +35,12 @@ public class SysTreeServiceImpl implements SysTreeService {
 
     @Autowired
     private SysAclModuleMapper sysAclModuleMapper;
+
+    @Autowired
+    private SysCoreService sysCoreService;
+
+    @Autowired
+    private SysAclMapper sysAclMapper;
 
     @Override
     public List<DeptLevelDto> deptTree() {
@@ -114,9 +126,93 @@ public class SysTreeServiceImpl implements SysTreeService {
             // 根据其子权限模块的层级获取其全部子权限模块
             List<AclModuleLevelDto> moduleLevelDtoList = (List<AclModuleLevelDto>) multimap.get(nextLevel);
             // 将其所有子权限模块设置进其的list中
-            aclModuleLevelDto.setDtoList(moduleLevelDtoList);
+            aclModuleLevelDto.setAclModuleList(moduleLevelDtoList);
 
             transformAclModuleTree(moduleLevelDtoList, nextLevel, multimap);
+        });
+    }
+
+    @Override
+    public List<AclModuleLevelDto> roleTree(Integer roleId) {
+        // 用户可以扮演多个角色，用户的权限是通过角色取得的
+        // 1、获取当前用户被已分配的权限点
+        List<SysAcl> currentUserAclList = sysCoreService.getCurrentUserAclList();
+
+        // 2、获取当前角色当前拥有的权限点
+        List<SysAcl> roleAclListByRoleId = sysCoreService.getRoleAclListByRoleId(roleId);
+
+        // 获取用户(角色)所拥有的权限点的id并去重
+        // 这两个是为了确定用户是否拥有权限点的权限（是否需要选择）和操作权限
+        Set<Integer> userAclId = currentUserAclList.stream().map(SysAcl::getId).collect(Collectors.toSet());
+        Set<Integer> roleAclId = roleAclListByRoleId.stream().map(SysAcl::getId).collect(Collectors.toSet());
+
+        // 存放当前系统所有权限点
+        List<AclDto> aclDtoList = Lists.newArrayList();
+
+        // 获取所有权限点，这个使用这个是因为显示的时候要把所有的权限点显示出来
+        List<SysAcl> allAcl = sysAclMapper.getAll();
+
+        /*// 如果只要显示当前用户所拥有的权限点，可以使用这个
+        HashSet<Integer> aclSet = new HashSet<>(userAclId);
+        aclSet.addAll(roleAclId);*/
+
+        for (SysAcl sysAcl : allAcl) {
+            AclDto aclDto = AclDto.adapt(sysAcl);
+            // 是否需要选中
+            if (userAclId.contains(sysAcl.getId())) {
+                aclDto.setChecked(true);
+            }
+            // 是否有权限操作
+            if (roleAclId.contains(sysAcl.getId())) {
+                aclDto.setHasAcl(true);
+            }
+            // 存入容器中
+            aclDtoList.add(aclDto);
+        }
+
+        return aclListToTree(aclDtoList);
+    }
+
+    /**
+     * 将权限点与权限模块构成树形结构
+     * @param aclDtoList 权限点休息
+     * @return
+     */
+    private List<AclModuleLevelDto> aclListToTree(List<AclDto> aclDtoList) {
+        // 获取权限模块树形结构
+        List<AclModuleLevelDto> moduleLevelDtoList = aclModuleTree();
+
+        // 将List<AclDto> 映射为 map<Integer, List<AclDto>> 方便之后使用
+        // 会将有效的权限提取出来
+        Multimap<Integer, AclDto> multimap = ArrayListMultimap.create();
+        aclDtoList.stream().filter(v -> v.getStatus() == 1).forEach(v -> multimap.put(v.getAclModuleId(), v));
+
+        // 将权限点与权限模块进行组装
+        bindAclsWithOrder(moduleLevelDtoList, multimap);
+
+        return moduleLevelDtoList;
+    }
+
+    /**
+     * 将权限点信息拼装到对应权限模块上
+     * @param moduleLevelDtoList 权限模块信息
+     * @param aclDtoMultimap 权限点信息
+     */
+    private void bindAclsWithOrder(List<AclModuleLevelDto> moduleLevelDtoList, Multimap<Integer, AclDto> aclDtoMultimap) {
+        // 如果当前权限模块为空，返回，递归结束条件
+        if (CollectionUtils.isEmpty(moduleLevelDtoList)) {
+            return;
+        }
+        moduleLevelDtoList.forEach(aclModuleLevelDto -> {
+            // 根据权限模块id从map中获取其权限点列表
+            List<AclDto> childAclDtoList = (List<AclDto>) aclDtoMultimap.get(aclModuleLevelDto.getId());
+            if (CollectionUtils.isEmpty(childAclDtoList)) {
+                // 按照seq排序并放入aclModuleLevelDto中
+                childAclDtoList.sort(Comparator.comparing(AclDto::getSeq));
+                aclModuleLevelDto.setAclDtoList(childAclDtoList);
+            }
+            // 递归设置当前权限模块的子模块
+            bindAclsWithOrder(aclModuleLevelDto.getAclModuleList(), aclDtoMultimap);
         });
     }
 }

@@ -1,6 +1,9 @@
 package com.lakeqiu.service;
 
+import com.lakeqiu.model.SysRole;
 import com.lakeqiu.vo.RoleParam;
+
+import java.util.List;
 
 /**
  * @author lakeqiu
@@ -18,4 +21,10 @@ public interface SysRoleService {
      * @param roleParam 更新角色
      */
     void update(RoleParam roleParam);
+
+    /**
+     * 获取所有角色
+     * @return 角色列表
+     */
+    List<SysRole> getAllRole();
 }

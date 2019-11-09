@@ -19,7 +19,9 @@ public class AclModuleLevelDto extends SysAclModule {
     /**
      * 存放子权限模块
      */
-    List<AclModuleLevelDto> dtoList = Lists.newArrayList();
+    List<AclModuleLevelDto> aclModuleList = Lists.newArrayList();
+
+    List<AclDto> aclDtoList = Lists.newArrayList();
 
     /**
      * 将sysAclModule转化为SysAclModuleDto

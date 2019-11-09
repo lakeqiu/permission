@@ -29,12 +29,6 @@ public class SysAclServiceImpl implements SysAclService {
     public void add(AclParam aclParam) {
         BeanValidator.check(aclParam);
 
-        // 检查一下要更新的权限点存不存在
-        SysAcl before = sysAclMapper.selectByPrimaryKey(aclParam.getId());
-        if (null == before) {
-            throw new ParamException("待更新的权限点不存在");
-        }
-
         // 检查当前权限点在数据库中是否存在
         if (checkExist(aclParam.getAclModuleId(), aclParam.getName(), aclParam.getId())) {
             throw new ParamException("存在相同的权限点");
@@ -55,6 +49,12 @@ public class SysAclServiceImpl implements SysAclService {
     @Override
     public void update(AclParam aclParam) {
         BeanValidator.check(aclParam);
+
+        // 检查一下要更新的权限点存不存在
+        SysAcl before = sysAclMapper.selectByPrimaryKey(aclParam.getId());
+        if (null == before) {
+            throw new ParamException("待更新的权限点不存在");
+        }
 
         // 检查当前权限点在数据库中是否存在
         if (checkExist(aclParam.getAclModuleId(), aclParam.getName(), aclParam.getId())) {
@@ -95,6 +95,6 @@ public class SysAclServiceImpl implements SysAclService {
      */
     private String generateCode() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        return dateFormat.format(new Date() + "_" + (int)(Math.random() * 100));
+        return dateFormat.format(new Date()) + "_" + (int)(Math.random() * 100);
     }
 }

@@ -20,4 +20,12 @@ public interface SysTreeService {
      * @return
      */
     List<AclModuleLevelDto> aclModuleTree();
+
+    /**
+     * 将所有权限模块以及权限点转化为树形结构，
+     * 并标出当前角色拥有的权限
+     * @param roleId 角色id
+     * @return
+     */
+    List<AclModuleLevelDto> roleTree(Integer roleId);
 }

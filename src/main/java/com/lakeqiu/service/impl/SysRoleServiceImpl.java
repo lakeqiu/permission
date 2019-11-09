@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author lakeqiu
@@ -26,7 +27,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         BeanValidator.check(roleParam);
 
         // 检查数据库中是否已经存在当前角色
-        if (checkExist()) {
+        if (checkExist(roleParam.getName(), roleParam.getId())) {
             throw new ParamException("存在相同的角色");
         }
 
@@ -48,7 +49,7 @@ public class SysRoleServiceImpl implements SysRoleService {
             throw new ParamException("待更新的角色不存在");
         }
         // 检查数据库中是否已经存在当前角色
-        if (checkExist()) {
+        if (checkExist(roleParam.getName(), roleParam.getId())) {
             throw new ParamException("存在相同的角色");
         }
 
@@ -61,7 +62,12 @@ public class SysRoleServiceImpl implements SysRoleService {
         sysRoleMapper.updateByPrimaryKeySelective(sysRole);
     }
 
-    private boolean checkExist() {
-        return false;
+    @Override
+    public List<SysRole> getAllRole() {
+        return sysRoleMapper.getAll();
+    }
+
+    private boolean checkExist(String name, Integer roleId) {
+        return sysRoleMapper.countByName(name, roleId) > 0;
     }
 }
