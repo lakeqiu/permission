@@ -5,7 +5,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.lakeqiu.dto.AclModuleLevelDto;
 import com.lakeqiu.dto.DeptLevelDto;
+import com.lakeqiu.mapper.SysAclModuleMapper;
 import com.lakeqiu.mapper.SysDeptMapper;
+import com.lakeqiu.model.SysAclModule;
 import com.lakeqiu.model.SysDept;
 import com.lakeqiu.service.SysTreeService;
 import com.lakeqiu.utils.LevelUtil;
@@ -24,6 +26,9 @@ import java.util.stream.Collectors;
 public class SysTreeServiceImpl implements SysTreeService {
     @Autowired
     private SysDeptMapper sysDeptMapper;
+
+    @Autowired
+    private SysAclModuleMapper sysAclModuleMapper;
 
     @Override
     public List<DeptLevelDto> deptTree() {
@@ -77,6 +82,41 @@ public class SysTreeServiceImpl implements SysTreeService {
 
     @Override
     public List<AclModuleLevelDto> aclModuleTree() {
-        return null;
+        // 查询出所有权限模块
+        List<SysAclModule> allAclModule = sysAclModuleMapper.getAllAclModule();
+        // 将SysAclModule转化为AclModuleLevelDto
+        List<AclModuleLevelDto> moduleLevelDtoList = Lists.newArrayList();
+        allAclModule.stream().map(AclModuleLevelDto::adapt).forEach(moduleLevelDtoList::add);
+        return aclModuleListToTree(moduleLevelDtoList);
+    }
+
+    private List<AclModuleLevelDto> aclModuleListToTree(List<AclModuleLevelDto> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return Lists.newArrayList();
+        }
+        // 将List<AclModuleLevelDto>映射为Map<层级，权限模块>
+        Multimap<String, AclModuleLevelDto> map = ArrayListMultimap.create();
+        dtoList.forEach(v -> map.put(v.getLevel(), v));
+        // 将顶级权限模块提取出来并按照seq排序
+        List<AclModuleLevelDto> rooList = dtoList.stream().filter(v -> v.getLevel().equals(LevelUtil.ROOT))
+                .sorted(Comparator.comparing(AclModuleLevelDto::getSeq))
+                .collect(Collectors.toList());
+        // 递归转化为树形结构
+        transformAclModuleTree(rooList, LevelUtil.ROOT, map);
+
+        return rooList;
+    }
+
+    private void transformAclModuleTree(List<AclModuleLevelDto> rooList, String level, Multimap<String, AclModuleLevelDto> multimap) {
+        rooList.forEach(aclModuleLevelDto -> {
+            // 计算其子权限模块的层级
+            String nextLevel = LevelUtil.calculateLevel(level, aclModuleLevelDto.getId());
+            // 根据其子权限模块的层级获取其全部子权限模块
+            List<AclModuleLevelDto> moduleLevelDtoList = (List<AclModuleLevelDto>) multimap.get(nextLevel);
+            // 将其所有子权限模块设置进其的list中
+            aclModuleLevelDto.setDtoList(moduleLevelDtoList);
+
+            transformAclModuleTree(moduleLevelDtoList, nextLevel, multimap);
+        });
     }
 }
