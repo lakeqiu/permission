@@ -1,7 +1,15 @@
 package com.lakeqiu.model;
 
+import lombok.*;
+
 import java.util.Date;
 
+@Getter
+@Setter
+@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SysRoleUser {
     private Integer id;
 

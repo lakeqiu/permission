@@ -17,4 +17,10 @@ public interface SysAclModuleService {
      * @param aclModuleParam 权限模块信息
      */
     void update(AclModuleParam aclModuleParam);
+
+    /**
+     * 删除权限模块
+     * @param aclModuleId 权限模块id
+     */
+    void delete(Integer aclModuleId);
 }

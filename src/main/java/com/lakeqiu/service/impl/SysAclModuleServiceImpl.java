@@ -2,6 +2,7 @@ package com.lakeqiu.service.impl;
 
 import com.lakeqiu.common.RequestHolder;
 import com.lakeqiu.exception.ParamException;
+import com.lakeqiu.mapper.SysAclMapper;
 import com.lakeqiu.mapper.SysAclModuleMapper;
 import com.lakeqiu.model.SysAclModule;
 import com.lakeqiu.service.SysAclModuleService;
@@ -25,6 +26,9 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
     @Autowired
     private SysAclModuleMapper sysAclModuleMapper;
 
+    @Autowired
+    private SysAclMapper sysAclMapper;
+
     @Override
     public void add(AclModuleParam aclModuleParam) {
         BeanValidator.check(aclModuleParam);
@@ -40,6 +44,9 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
                 .operator(RequestHolder.getCurrentUser().getUsername())
                 .operateIp(IpUtil.getRemoteIp(RequestHolder.getCurrentRequest()))
                 .build();
+
+        // 计算当前权限层级关系
+        sysAclModule.setLevel(LevelUtil.calculateLevel(getLevel(aclModuleParam.getParentId()), aclModuleParam.getParentId()));
 
         sysAclModuleMapper.insertSelective(sysAclModule);
     }
@@ -106,5 +113,30 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
     private String getLevel(Integer aclModuleId) {
         SysAclModule sysAclModule = sysAclModuleMapper.selectByPrimaryKey(aclModuleId);
         return null == sysAclModule ? null : sysAclModule.getLevel();
+    }
+
+    /**
+     * 删除权限模块
+     *
+     * @param aclModuleId 权限模块id
+     */
+    @Override
+    public void delete(Integer aclModuleId) {
+        // 检查有没有这个权限模块
+        SysAclModule sysAclModule = sysAclModuleMapper.selectByPrimaryKey(aclModuleId);
+        if (null == sysAclModule) {
+            throw new ParamException("当前权限模块不存在");
+        }
+
+        // 查看这个权限模块有没有子权限模块或权限点
+        if (sysAclModuleMapper.countByParentId(aclModuleId) > 0) {
+            throw new ParamException("当前权限模块下有子权限模块，不能删除");
+        }
+        if (sysAclMapper.countByAclModuleId(aclModuleId) > 0) {
+            throw new ParamException("当前权限模块下有权限点，不能删除");
+        }
+
+        // 删除部门
+        sysAclModuleMapper.deleteByPrimaryKey(aclModuleId);
     }
 }

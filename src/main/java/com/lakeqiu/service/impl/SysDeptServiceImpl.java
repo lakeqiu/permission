@@ -1,9 +1,9 @@
 package com.lakeqiu.service.impl;
 
-import com.google.common.base.Preconditions;
 import com.lakeqiu.common.RequestHolder;
 import com.lakeqiu.exception.ParamException;
 import com.lakeqiu.mapper.SysDeptMapper;
+import com.lakeqiu.mapper.SysUserMapper;
 import com.lakeqiu.model.SysDept;
 import com.lakeqiu.service.SysDeptService;
 import com.lakeqiu.utils.BeanValidator;
@@ -26,6 +26,9 @@ public class SysDeptServiceImpl implements SysDeptService {
 
     @Autowired
     private SysDeptMapper sysDeptMapper;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     @Override
     public void saveDept(DeptParam deptParam) {
@@ -121,5 +124,30 @@ public class SysDeptServiceImpl implements SysDeptService {
         SysDept sysDept = sysDeptMapper.selectByPrimaryKey(deptId);
         // 如果部门为空，说明其的层级应该是第一级，故返回null
         return null == sysDept ? null : sysDept.getLevel();
+    }
+
+    /**
+     * 根据部门id删除部门
+     *
+     * @param deptId 部门id
+     */
+    @Override
+    public void delete(Integer deptId) {
+        // 1、查看有没有这个部门
+        SysDept dept = sysDeptMapper.selectByPrimaryKey(deptId);
+        if (null == dept) {
+            throw new ParamException("要删除的部门不存在");
+        }
+
+        // 查看这个部门有没有子部门或用户
+        if (sysDeptMapper.countByParentId(deptId) > 0) {
+            throw new ParamException("当前部门下有子部门，不能删除");
+        }
+        if (sysUserMapper.countByDeptId(deptId) > 0) {
+            throw new ParamException("当前部门下有用户，不能删除");
+        }
+
+        // 删除部门
+        sysDeptMapper.deleteByPrimaryKey(deptId);
     }
 }

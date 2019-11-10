@@ -5,6 +5,8 @@ import com.lakeqiu.beans.PageResult;
 import com.lakeqiu.model.SysUser;
 import com.lakeqiu.vo.UserParam;
 
+import java.util.List;
+
 /**
  * @author lakeqiu
  */
@@ -34,4 +36,10 @@ public interface SysUserService {
      * @param pageQuery 分页请求
      */
     PageResult<SysUser> getPageByDeptId(Integer deptId, PageQuery pageQuery);
+
+    /**
+     * 获取所有用户
+     * @return
+     */
+    List<SysUser> getAllUser();
 }

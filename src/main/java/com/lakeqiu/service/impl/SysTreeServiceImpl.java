@@ -42,6 +42,31 @@ public class SysTreeServiceImpl implements SysTreeService {
     @Autowired
     private SysAclMapper sysAclMapper;
 
+    /**
+     * 根据用户id查询用户所拥有的权限点（树形结构）
+     *
+     * @param userId 用户id
+     * @return
+     */
+    @Override
+    public List<AclModuleLevelDto> userAclTree(Integer userId) {
+        // 获取用户所拥有的权限
+        List<SysAcl> currentUserAclList = sysCoreService.getCurrentUserAclList();
+
+        List<AclDto> aclDtoList = Lists.newArrayList();
+
+        // 将acl转化为aclDto
+        currentUserAclList.stream().forEach(acl -> {
+            AclDto aclDto = AclDto.adapt(acl);
+            aclDto.setHasAcl(true);
+            aclDto.setChecked(true);
+            aclDtoList.add(aclDto);
+        });
+
+        // 转化为树形结构
+        return aclListToTree(aclDtoList);
+    }
+
     @Override
     public List<DeptLevelDto> deptTree() {
         List<SysDept> deptList = sysDeptMapper.getAllDept();

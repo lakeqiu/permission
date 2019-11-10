@@ -9,6 +9,7 @@ import com.lakeqiu.vo.DeptParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -50,5 +51,12 @@ public class SysDeptController {
     public JsonData updateDept(DeptParam deptParam){
         sysDeptService.updateDept(deptParam);
         return JsonData.success("更新部门成功");
+    }
+
+    @RequestMapping("delete.json")
+    @ResponseBody
+    public JsonData delete(@RequestParam("id") int id) {
+        sysDeptService.delete(id);
+        return JsonData.success();
     }
 }

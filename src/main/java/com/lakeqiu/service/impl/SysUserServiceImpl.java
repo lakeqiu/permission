@@ -111,4 +111,9 @@ public class SysUserServiceImpl implements SysUserService {
     private boolean checkTelephoneExist(String telephone, Integer userId) {
         return sysUserMapper.countByTelephone(telephone, userId) > 0;
     }
+
+    @Override
+    public List<SysUser> getAllUser() {
+        return sysUserMapper.getAll();
+    }
 }

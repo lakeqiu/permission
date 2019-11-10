@@ -1,10 +1,10 @@
 package com.lakeqiu.controller;
 
+import com.google.common.collect.Lists;
 import com.lakeqiu.common.JsonData;
 import com.lakeqiu.model.SysRole;
-import com.lakeqiu.service.SysRoleAclService;
-import com.lakeqiu.service.SysRoleService;
-import com.lakeqiu.service.SysTreeService;
+import com.lakeqiu.model.SysUser;
+import com.lakeqiu.service.*;
 import com.lakeqiu.utils.StringUtil;
 import com.lakeqiu.vo.RoleParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author lakeqiu
@@ -31,6 +35,12 @@ public class SysRoleController {
     @Autowired
     private SysRoleAclService sysRoleAclService;
 
+    @Autowired
+    private SysRoleUserService sysRoleUserService;
+
+    @Autowired
+    private SysUserService sysUserService;
+
     @RequestMapping("role.page")
     public ModelAndView page() {
         return new ModelAndView("role");
@@ -38,6 +48,7 @@ public class SysRoleController {
 
     /**
      * 添加角色
+     *
      * @param roleParam 角色信息
      * @return
      */
@@ -50,6 +61,7 @@ public class SysRoleController {
 
     /**
      * 更新角色
+     *
      * @param roleParam
      * @return
      */
@@ -62,6 +74,7 @@ public class SysRoleController {
 
     /**
      * 获取所有角色
+     *
      * @return
      */
     @RequestMapping("list.json")
@@ -73,6 +86,7 @@ public class SysRoleController {
 
     /**
      * 返回权限模块及权限点组成的树
+     *
      * @param roleId
      * @return
      */
@@ -84,6 +98,7 @@ public class SysRoleController {
 
     /**
      * 更新角色权限信息
+     *
      * @param roleId 角色id
      * @param aclIds 权限列表
      */
@@ -93,6 +108,36 @@ public class SysRoleController {
         List<Integer> aclIdList = StringUtil.splitToListInt(aclIds);
         sysRoleAclService.changeRoleAcls(roleId, aclIdList);
         return JsonData.success();
+    }
+
+    @RequestMapping("changeUsers.json")
+    @ResponseBody
+    public JsonData changeUsers(@RequestParam("roleId") int roleId, @RequestParam(value = "userIds", required = false, defaultValue = "") String userIds) {
+        List<Integer> userIdList = StringUtil.splitToListInt(userIds);
+        sysRoleUserService.changeRoleUsers(roleId, userIdList);
+        return JsonData.success();
+    }
+
+    @RequestMapping("users.json")
+    @ResponseBody
+    public JsonData users(@RequestParam("roleId") int roleId) {
+        // 获取已扮演当前角色的用户
+        List<SysUser> selectUsersList = sysRoleUserService.getUsersByRoleId(roleId);
+        // 获取所有用户
+        List<SysUser> allUser = sysUserService.getAllUser();
+
+        Set<Integer> selectUserIdList = selectUsersList.stream().map(SysUser::getId).collect(Collectors.toSet());
+
+        // 两者联立求出没有扮演此角色并且状态有效的用户
+        List<SysUser> unselectUserList = allUser.stream().filter(user -> !selectUserIdList.contains(user.getId()))
+                .filter(user -> user.getStatus() == 1).collect(Collectors.toList());
+
+        // 存放在map中返回
+        Map<String, List<SysUser>> map = new HashMap<>();
+        map.put("selected", selectUsersList);
+        map.put("unselected", unselectUserList);
+
+        return JsonData.success(map);
     }
 }
 

@@ -17,4 +17,10 @@ public interface SysDeptService {
      * @param deptParam 部门信息
      */
     void updateDept(DeptParam deptParam);
+
+    /**
+     * 根据部门id删除部门
+     * @param deptId 部门id
+     */
+    void delete(Integer deptId);
 }
