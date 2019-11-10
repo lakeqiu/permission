@@ -1,5 +1,6 @@
 package com.lakeqiu.model;
 
+
 public class SysLogWithBLOBs extends SysLog {
     private String oldValue;
 

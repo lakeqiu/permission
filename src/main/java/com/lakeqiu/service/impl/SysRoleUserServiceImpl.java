@@ -7,6 +7,7 @@ import com.lakeqiu.mapper.SysRoleUserMapper;
 import com.lakeqiu.mapper.SysUserMapper;
 import com.lakeqiu.model.SysRoleUser;
 import com.lakeqiu.model.SysUser;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.service.SysRoleUserService;
 import com.lakeqiu.utils.IpUtil;
 import org.apache.commons.collections.CollectionUtils;
@@ -30,6 +31,9 @@ public class SysRoleUserServiceImpl implements SysRoleUserService {
 
     @Autowired
     private SysUserMapper sysUserMapper;
+
+    @Autowired
+    private SysLogService sysLogService;
 
     @Override
     public List<SysUser> getUsersByRoleId(Integer roleId) {
@@ -65,6 +69,8 @@ public class SysRoleUserServiceImpl implements SysRoleUserService {
 
         // 2、不相同，删除这种角色用户的关系，再添加新的角色用户关系
         updateRoleUsers(roleId, userIdList);
+
+        sysLogService.saveRoleUserLog(roleId, beforeUserList, userIdList);
 
     }
 

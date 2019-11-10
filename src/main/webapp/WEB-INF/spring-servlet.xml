@@ -33,6 +33,7 @@
      -->
     <bean class="com.lakeqiu.common.SpringExceptionResolver" />
     <bean class="com.lakeqiu.common.ApplicationContextHelper" lazy-init="false" />
+    <bean class="com.lakeqiu.common.RedisPool" name="redisPool" />
 
     <!-- 当我们定义一个spring mvc 的接口时会使用RequestMapping注解，这个的作用就是让spring mvc找到对应的接口进行处理 -->
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" />

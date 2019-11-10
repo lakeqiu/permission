@@ -6,12 +6,15 @@ import com.lakeqiu.mapper.SysAclMapper;
 import com.lakeqiu.mapper.SysRoleAclMapper;
 import com.lakeqiu.mapper.SysRoleUserMapper;
 import com.lakeqiu.model.SysAcl;
+import com.lakeqiu.model.SysUser;
 import com.lakeqiu.service.SysCoreService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author lakeqiu
@@ -64,7 +67,13 @@ public class SysCoreServiceImpl implements SysCoreService {
      * @return 结果
      */
     private boolean isSuperAdmin() {
-        return true;
+        // 这里是我自己定义了一个假的超级管理员规则，实际中要根据项目进行修改
+        // 可以是配置文件获取，可以指定某个用户，也可以指定某个角色
+        SysUser sysUser = RequestHolder.getCurrentUser();
+        if (sysUser.getMail().contains("admin")) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -78,5 +87,60 @@ public class SysCoreServiceImpl implements SysCoreService {
 
         // 2、查询出上面查出来的所有权限点id所对应的权限详情
         return sysAclMapper.getByIdList(aclList);
+    }
+
+    /**
+     * 判断当前用户是否有这个路径的访问权限
+     *
+     * @param servletPath 路径
+     * @return 结果
+     */
+    @Override
+    public boolean hasUrlAcl(String servletPath) {
+        if (isSuperAdmin()) {
+            return true;
+        }
+
+        // 根据url查询出其权限点
+        List<SysAcl> sysAclList = sysAclMapper.getByUrl(servletPath);
+        // 如果没有这个权限点，说明我们根本不关心这个请求路径，可以访问
+        if (CollectionUtils.isEmpty(sysAclList)) {
+            return true;
+        }
+        // 获取当前用户的所有权限点
+        List<SysAcl> currentUserAclList = getCurrentUserAclList();
+        Set<Integer> currentUserAclSet = currentUserAclList.stream().map(SysAcl::getId).collect(Collectors.toSet());
+
+        // 判断是否有有效权限点
+        boolean hasValidAcl = false;
+        // 遍历可以访问这个路径的权限点
+        for (SysAcl sysAcl : sysAclList) {
+            // 这个权限无效
+            if (null == sysAcl || sysAcl.getStatus() != 1) {
+                continue;
+            }
+            hasValidAcl = true;
+            // 有权限访问
+            if (currentUserAclSet.contains(sysAcl.getId())) {
+                return true;
+            }
+        }
+        // 如果没有有效权限点，那么这个路径等于不需要权限访问了，返回true
+        if (!hasValidAcl) {
+            return true;
+        }
+        return false;
+
+
+        /*// 获取当前登录用户
+        SysUser currentUser = RequestHolder.getCurrentUser();
+        // 获取用户扮演的角色id
+        List<Integer> roleIdList = sysRoleUserMapper.getRoleIdListByUserId(currentUser.getId());
+        // 查询出这些角色拥有的权限
+        List<Integer> aclIdList = sysRoleAclMapper.getAclIdListByRoleIdList(roleIdList);
+        // 获取用户的所有权限点
+        List<SysAcl> aclList = sysAclMapper.getByIdList(aclIdList);
+        // 检查当中有没有访问的路径
+        return aclList.stream().map(SysAcl::getUrl).anyMatch(url -> url.equals(servletPath));*/
     }
 }

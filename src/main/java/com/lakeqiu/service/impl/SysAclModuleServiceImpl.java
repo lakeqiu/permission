@@ -6,6 +6,7 @@ import com.lakeqiu.mapper.SysAclMapper;
 import com.lakeqiu.mapper.SysAclModuleMapper;
 import com.lakeqiu.model.SysAclModule;
 import com.lakeqiu.service.SysAclModuleService;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.utils.BeanValidator;
 import com.lakeqiu.utils.IpUtil;
 import com.lakeqiu.utils.LevelUtil;
@@ -29,6 +30,9 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
     @Autowired
     private SysAclMapper sysAclMapper;
 
+    @Autowired
+    private SysLogService sysLogService;
+
     @Override
     public void add(AclModuleParam aclModuleParam) {
         BeanValidator.check(aclModuleParam);
@@ -49,6 +53,8 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
         sysAclModule.setLevel(LevelUtil.calculateLevel(getLevel(aclModuleParam.getParentId()), aclModuleParam.getParentId()));
 
         sysAclModuleMapper.insertSelective(sysAclModule);
+
+        sysLogService.saveAclModuleLog(null, sysAclModule);
     }
 
     @Override
@@ -75,6 +81,8 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
 
         // 更新权限模块及子权限模块
         updateWithChild(before, after);
+
+        sysLogService.saveAclModuleLog(before, after);
     }
 
     @Transactional
@@ -138,5 +146,7 @@ public class SysAclModuleServiceImpl implements SysAclModuleService {
 
         // 删除部门
         sysAclModuleMapper.deleteByPrimaryKey(aclModuleId);
+
+        sysLogService.saveAclModuleLog(sysAclModule, null);
     }
 }

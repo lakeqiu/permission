@@ -9,6 +9,7 @@ import com.lakeqiu.mapper.SysRoleUserMapper;
 import com.lakeqiu.mapper.SysUserMapper;
 import com.lakeqiu.model.SysRole;
 import com.lakeqiu.model.SysUser;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.service.SysRoleService;
 import com.lakeqiu.utils.BeanValidator;
 import com.lakeqiu.utils.IpUtil;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author lakeqiu
@@ -39,6 +39,9 @@ public class SysRoleServiceImpl implements SysRoleService {
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    @Autowired
+    private SysLogService sysLogService;
+
     @Override
     public void add(RoleParam roleParam) {
         BeanValidator.check(roleParam);
@@ -55,6 +58,8 @@ public class SysRoleServiceImpl implements SysRoleService {
                 .operateTime(new Date()).build();
 
         sysRoleMapper.insertSelective(sysRole);
+
+        sysLogService.saveRoleLog(null, sysRole);
     }
 
     @Override
@@ -77,6 +82,8 @@ public class SysRoleServiceImpl implements SysRoleService {
                 .operateTime(new Date()).id(roleParam.getId()).build();
 
         sysRoleMapper.updateByPrimaryKeySelective(sysRole);
+
+        sysLogService.saveRoleLog(before, sysRole);
     }
 
     @Override
@@ -124,6 +131,9 @@ public class SysRoleServiceImpl implements SysRoleService {
      */
     @Override
     public List<SysUser> getUserListByRoleList(List<SysRole> roleList) {
+        if (CollectionUtils.isEmpty(roleList)) {
+            return Lists.newArrayList();
+        }
         // 映射
         List<Integer> roleIdList = roleList.stream().map(SysRole::getId).collect(Collectors.toList());
         // 获取用户id列表

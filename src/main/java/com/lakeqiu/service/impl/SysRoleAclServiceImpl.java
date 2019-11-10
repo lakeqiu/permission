@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.lakeqiu.common.RequestHolder;
 import com.lakeqiu.mapper.SysRoleAclMapper;
 import com.lakeqiu.model.SysRoleAcl;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.service.SysRoleAclService;
 import com.lakeqiu.utils.IpUtil;
 import org.apache.commons.collections.CollectionUtils;
@@ -24,6 +25,9 @@ public class SysRoleAclServiceImpl implements SysRoleAclService {
     @Autowired
     private SysRoleAclMapper sysRoleAclMapper;
 
+    @Autowired
+    private SysLogService sysLogService;
+
     @Override
     public void changeRoleAcls(Integer roleId, List<Integer> aclIdList) {
         // 获取之前角色的权限点id
@@ -42,6 +46,8 @@ public class SysRoleAclServiceImpl implements SysRoleAclService {
 
         // 更新权限
         updateRoleAcls(roleId, aclIdList);
+
+        sysLogService.svaeRoleAclLog(roleId, beforeAclIdList, aclIdList);
     }
 
     @Transactional

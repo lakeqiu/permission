@@ -28,4 +28,11 @@ public interface SysCoreService {
      * @return 权限列表
      */
     List<SysAcl> getRoleAclListByRoleId(Integer roleId);
+
+    /**
+     * 判断当前用户是否有这个路径的访问权限
+     * @param servletPath 路径
+     * @return 结果
+     */
+    boolean hasUrlAcl(String servletPath);
 }

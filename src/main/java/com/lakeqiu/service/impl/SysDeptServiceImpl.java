@@ -6,6 +6,7 @@ import com.lakeqiu.mapper.SysDeptMapper;
 import com.lakeqiu.mapper.SysUserMapper;
 import com.lakeqiu.model.SysDept;
 import com.lakeqiu.service.SysDeptService;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.utils.BeanValidator;
 import com.lakeqiu.utils.IpUtil;
 import com.lakeqiu.utils.LevelUtil;
@@ -30,6 +31,9 @@ public class SysDeptServiceImpl implements SysDeptService {
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    @Autowired
+    private SysLogService sysLogService;
+
     @Override
     public void saveDept(DeptParam deptParam) {
         // 检查参数是否合法
@@ -40,16 +44,17 @@ public class SysDeptServiceImpl implements SysDeptService {
         }
         // 创建部门信息类
         SysDept sysDept = SysDept.builder().name(deptParam.getName()).parentId(deptParam.getParentId())
-                .seq(deptParam.getSeq()).remark(deptParam.getRemark()).build();
+                .seq(deptParam.getSeq()).remark(deptParam.getRemark())
+                .operator(RequestHolder.getCurrentUser().getUsername())
+                .operateIp(IpUtil.getRemoteIp(RequestHolder.getCurrentRequest()))
+                .operateTime(new Date()).build();
         // 获取计算出来的当前部门层级关系
         sysDept.setLevel(LevelUtil.calculateLevel(getLevel(deptParam.getParentId()), deptParam.getParentId()));
-        // TODO
-        sysDept.setOperator("System");
-        // TODO
-        sysDept.setOperateIp("127.0.0.1");
-        sysDept.setOperateTime(new Date());
+
         // 插入数据库，这个方法会判断值是否为空，为空就不插入，与insert相比，可以避开not null约束
         sysDeptMapper.insertSelective(sysDept);
+
+        sysLogService.saveDeptLog(null, sysDept);
     }
 
     @Override
@@ -75,6 +80,8 @@ public class SysDeptServiceImpl implements SysDeptService {
         dept.setLevel(LevelUtil.calculateLevel(getLevel(deptParam.getParentId()), deptParam.getParentId()));
 
         updateWithChild(before, dept);
+
+        sysLogService.saveDeptLog(before, dept);
     }
 
     /**
@@ -149,5 +156,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 
         // 删除部门
         sysDeptMapper.deleteByPrimaryKey(deptId);
+
+        sysLogService.saveDeptLog(dept, null);
     }
 }

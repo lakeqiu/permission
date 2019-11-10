@@ -7,6 +7,7 @@ import com.lakeqiu.exception.ParamException;
 import com.lakeqiu.mapper.SysAclMapper;
 import com.lakeqiu.model.SysAcl;
 import com.lakeqiu.service.SysAclService;
+import com.lakeqiu.service.SysLogService;
 import com.lakeqiu.utils.BeanValidator;
 import com.lakeqiu.utils.IpUtil;
 import com.lakeqiu.vo.AclParam;
@@ -24,6 +25,9 @@ import java.util.List;
 public class SysAclServiceImpl implements SysAclService {
     @Autowired
     private SysAclMapper sysAclMapper;
+
+    @Autowired
+    private SysLogService sysLogService;
 
     @Override
     public void add(AclParam aclParam) {
@@ -43,6 +47,8 @@ public class SysAclServiceImpl implements SysAclService {
                 .code(generateCode()).build();
 
         sysAclMapper.insertSelective(sysAcl);
+
+        sysLogService.saveAclLog(null, sysAcl);
 
     }
 
@@ -70,6 +76,8 @@ public class SysAclServiceImpl implements SysAclService {
                 .name(aclParam.getName()).build();
 
         sysAclMapper.updateByPrimaryKeySelective(sysAcl);
+
+        sysLogService.saveAclLog(before, sysAcl);
     }
 
     @Override
