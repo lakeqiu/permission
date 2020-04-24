@@ -27,6 +27,7 @@ public class TestController {
         log.info(JsonMapper.objToJson(bean));*/
         // throw new PermissionException("权限不足");
         return JsonData.success("hello");
+
     }
 
     @RequestMapping("validate.json")

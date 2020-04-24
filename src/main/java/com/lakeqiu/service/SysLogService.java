@@ -1,6 +1,9 @@
 package com.lakeqiu.service;
 
+import com.lakeqiu.beans.PageQuery;
+import com.lakeqiu.beans.PageResult;
 import com.lakeqiu.model.*;
+import com.lakeqiu.vo.SearchLogParam;
 
 import java.util.List;
 
@@ -58,4 +61,18 @@ public interface SysLogService {
      * @param after
      */
     void saveRoleUserLog(Integer roleId, List<Integer> before, List<Integer> after);
+
+    /**
+     * 权限还原
+     * @param id
+     */
+    void recover(int id);
+
+    /**
+     * 查看权限更新记录
+     * @param param
+     * @param page
+     * @return
+     */
+    PageResult<SysLogWithBLOBs> searchPageList(SearchLogParam param, PageQuery page);
 }
